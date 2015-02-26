@@ -76,7 +76,7 @@ else
 endif
 
 CXXFLAGS := -g -Wall -std=c++0x
-CXXFLAGS += -MD -Ithird-party/lz4 -DCONFIG_H=\"$(CONFIG_H)\"
+CXXFLAGS += -MD -Ithird-party/lz4 -I/usr/include/db4.8 -DCONFIG_H=\"$(CONFIG_H)\"
 ifeq ($(DEBUG_S),1)
         CXXFLAGS += -fno-omit-frame-pointer -DDEBUG
 else
