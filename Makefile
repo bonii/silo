@@ -200,8 +200,11 @@ $(MASSTREE_OBJFILES) : $(O)/%.o: masstree/%.cc masstree/config.h
 third-party/lz4/liblz4.so:
 	make -C third-party/lz4 library
 
-.PHONY: test
+.PHONY: test objs
+
 test: $(O)/test
+
+objs: $(OBJFILES) $(MASSTREE_OBJFILES) third-party/lz4/liblz4.so
 
 $(O)/test: $(O)/test.o $(OBJFILES) $(MASSTREE_OBJFILES) third-party/lz4/liblz4.so
 	$(CXX) -o $(O)/test $^ $(LDFLAGS) $(LZ4LDFLAGS)
