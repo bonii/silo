@@ -238,6 +238,46 @@ ndb_wrapper<Transaction>::abort_txn(void *txn)
 
 template <template <typename> class Transaction>
 void
+ndb_wrapper<Transaction>::write_txn(void *txn)
+{
+  ndbtxn * const p = reinterpret_cast<ndbtxn *>(txn);
+#define MY_OP_X(a, b) \
+  case a: \
+    { \
+      auto t = cast< b >()(p); \
+      t->write(); \
+      Destroy(t); \
+      return; \
+    }
+  switch (p->hint) {
+    TXN_PROFILE_HINT_OP(MY_OP_X)
+  default:
+    ALWAYS_ASSERT(false);
+  }
+#undef MY_OP_X
+}
+
+template <template <typename> class Transaction>
+size_t
+ndb_wrapper<Transaction>::validate_txn(void *txn)
+{
+  ndbtxn * const p = reinterpret_cast<ndbtxn *>(txn);
+#define MY_OP_X(a, b) \
+  case a: \
+    { \
+      auto t = cast< b >()(p); \
+      return t->validate(); \
+    }
+  switch (p->hint) {
+    TXN_PROFILE_HINT_OP(MY_OP_X)
+  default:
+    ALWAYS_ASSERT(false);
+  }
+#undef MY_OP_X
+}
+
+template <template <typename> class Transaction>
+void
 ndb_wrapper<Transaction>::print_txn_debug(void *txn) const
 {
   ndbtxn * const p = reinterpret_cast<ndbtxn *>(txn);

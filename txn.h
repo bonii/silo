@@ -59,7 +59,7 @@ public:
 
   // TXN_EMBRYO - the transaction object has been allocated but has not
   // done any operations yet
-  enum txn_state { TXN_EMBRYO, TXN_ACTIVE, TXN_COMMITED, TXN_ABRT, };
+  enum txn_state { TXN_EMBRYO, TXN_ACTIVE, TXN_COMMITED, TXN_ABRT, TXN_VALIDATED};
 
   enum {
     // use the low-level scan protocol for checking scan consistency,
@@ -629,6 +629,10 @@ public:
   // failure by throwing an abort exception
   bool commit(bool doThrow = false);
 
+  size_t validate();
+
+  void write();
+
   // abort() always succeeds
   inline void
   abort()
@@ -820,8 +824,10 @@ protected:
   read_set_map read_set;
   write_set_map write_set;
   absent_set_map absent_set;
+  dbtuple_write_info_vec validated_write_dbtuples;
 
   string_allocator_type *sa;
+  std::pair<bool,tid_t> commit_tid;
 
   unmanaged<scoped_rcu_region> rcu_guard_;
 };

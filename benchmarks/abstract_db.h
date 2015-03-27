@@ -118,6 +118,10 @@ public:
    */
   virtual bool commit_txn(void *txn) = 0;
 
+  virtual size_t validate_txn(void *txn) = 0;
+
+  virtual void write_txn(void *txn) = 0;
+
   /**
    * XXX
    */
