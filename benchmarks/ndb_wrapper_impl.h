@@ -274,6 +274,7 @@ ndb_wrapper<Transaction>::validate_txn(void *txn)
     ALWAYS_ASSERT(false);
   }
 #undef MY_OP_X
+  return -1;
 }
 
 template <template <typename> class Transaction>
