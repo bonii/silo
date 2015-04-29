@@ -34,6 +34,14 @@ public:
     return true;
   }
 
+  virtual size_t validate_txn(void *txn) {
+      NDB_UNIMPLEMENTED("validate txn");
+  return 0;}
+
+  virtual void write_txn(void *txn) {
+      NDB_UNIMPLEMENTED("write txn");
+  }
+
   virtual void abort_txn(void *txn) { ALWAYS_ASSERT(false); } // txn should never abort
   virtual void print_txn_debug(void *txn) const { }
 
