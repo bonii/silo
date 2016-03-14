@@ -55,23 +55,43 @@ void transaction<Protocol, Traits>::abort_impl(abort_reason reason) {
         case TXN_COMMITED:
             throw transaction_unusable_exception();
     }
-    state = TXN_ABRT;
-    this->reason = reason;
 
     // on abort, we need to go over all insert nodes and
     // release the locks
-    typename write_set_map::iterator it = write_set.begin();
-    typename write_set_map::iterator it_end = write_set.end();
-    for (; it != it_end; ++it) {
-        dbtuple * const tuple = it->get_tuple();
-        if (it->is_insert()) {
-            INVARIANT(tuple->is_locked());
-            this->cleanup_inserted_tuple_marker(tuple, it->get_key(),
-                    it->get_btree());
-            tuple->unlock();
+    if (state != TXN_VALIDATED) {
+        typename write_set_map::iterator it = write_set.begin();
+        typename write_set_map::iterator it_end = write_set.end();
+
+        for (; it != it_end; ++it) {
+            dbtuple * const tuple = it->get_tuple();
+            if (it->is_insert()) {
+                INVARIANT(tuple->is_locked());
+                this->cleanup_inserted_tuple_marker(tuple, it->get_key(),
+                        it->get_btree());
+                tuple->unlock();
+            }
+        }
+    } else {
+        for (typename dbtuple_write_info_vec::iterator it =
+                validated_write_dbtuples.begin();
+                it != validated_write_dbtuples.end(); ++it) {
+            if (it->is_locked()) {
+                if (it->is_insert()) {
+                    INVARIANT(it->entry);
+                    this->cleanup_inserted_tuple_marker(it->tuple.get(),
+                            it->entry->get_key(), it->entry->get_btree());
+                }
+                // XXX: potential optimization: on unlock() for abort, we don't
+                // technically need to change the version number
+                it->tuple->unlock();
+            } else {
+                INVARIANT(!it->is_insert());
+            }
         }
     }
 
+    state = TXN_ABRT;
+    this->reason = reason;
     clear();
 }
 
@@ -212,8 +232,9 @@ bool transaction<Protocol, Traits>::handle_last_tuple_in_group(
         const dbtuple::version_t v = tuple->lock(true); // lock for write
         INVARIANT(dbtuple::IsLatest(v) == tuple->is_latest());
         last.mark_locked();
-        if (unlikely(!dbtuple::IsLatest(v) ||
-                !cast()->can_read_tid(tuple->version))) {
+        if (unlikely(
+                !dbtuple::IsLatest(v)
+                        || !cast()->can_read_tid(tuple->version))) {
             // XXX(stephentu): overly conservative (with the can_read_tid() check)
             return false; // signal abort
         }
@@ -238,7 +259,7 @@ bool transaction<Protocol, Traits>::commit(bool doThrow) {
         case TXN_ACTIVE:
             break;
         case TXN_VALIDATED:
-            throw std::invalid_argument("Unsupported commit after validate"); //Can call write from here
+            throw std::invalid_argument("Unsupported commit after validate"); //Can call write from here but that code-path should not be used
         case TXN_COMMITED:
             return true;
         case TXN_ABRT:
@@ -299,7 +320,9 @@ bool transaction<Protocol, Traits>::commit(bool doThrow) {
             for (; it != it_end; last_px = &(*it), ++it) {
                 if (likely(last_px && last_px->tuple != it->tuple)) {
                     // on boundary
-                    if (unlikely(!handle_last_tuple_in_group(*last_px, inserted_last_run))) {
+                    if (unlikely(
+                            !handle_last_tuple_in_group(*last_px,
+                                    inserted_last_run))) {
                         abort_trap((reason =
                                 ABORT_REASON_WRITE_NODE_INTERFERENCE));
                         goto do_abort;
@@ -317,8 +340,8 @@ bool transaction<Protocol, Traits>::commit(bool doThrow) {
                     INVARIANT(!it->is_locked());
                 }
             }
-            if (likely(last_px)
-                    && unlikely(!handle_last_tuple_in_group(*last_px, inserted_last_run))) {
+            if (likely(
+                    last_px) && unlikely(!handle_last_tuple_in_group(*last_px, inserted_last_run))) {
                 abort_trap((reason = ABORT_REASON_WRITE_NODE_INTERFERENCE));
                 goto do_abort;
             }
@@ -352,9 +375,11 @@ bool transaction<Protocol, Traits>::commit(bool doThrow) {
                             std::cerr << "validating dbtuple " << util::hexify(it->get_tuple()) << " at snapshot_tid " << g_proto_version_str(cast()->snapshot_tid()) << std::endl);
                     const bool found = sorted_dbtuples_contains(write_dbtuples,
                             it->get_tuple());
-                    if (likely(found ?
-                            it->get_tuple()->is_latest_version(it->get_tid()) :
-                            it->get_tuple()->stable_is_latest_version(it->get_tid())))
+                    if (likely(
+                            found ? it->get_tuple()->is_latest_version(
+                                            it->get_tid()) :
+                                    it->get_tuple()->stable_is_latest_version(
+                                            it->get_tid())))
                         continue;
 
                     VERBOSE(
@@ -633,8 +658,7 @@ size_t transaction<Protocol, Traits>::validate() {
             throw std::invalid_argument(
                     "Cannot call validate on a committed txn");
         case TXN_ABRT:
-            throw std::invalid_argument(
-                    "Cannot call validate on an aborted txn");
+            throw transaction_abort_exception(reason);
     }
 
     // copy write tuples to vector for sorting
@@ -686,7 +710,9 @@ size_t transaction<Protocol, Traits>::validate() {
             for (; it != it_end; last_px = &(*it), ++it) {
                 if (likely(last_px && last_px->tuple != it->tuple)) {
                     // on boundary
-                    if (unlikely(!handle_last_tuple_in_group(*last_px, inserted_last_run))) {
+                    if (unlikely(
+                            !handle_last_tuple_in_group(*last_px,
+                                    inserted_last_run))) {
                         abort_trap((reason =
                                 ABORT_REASON_WRITE_NODE_INTERFERENCE));
                         goto do_abort;
@@ -704,8 +730,8 @@ size_t transaction<Protocol, Traits>::validate() {
                     INVARIANT(!it->is_locked());
                 }
             }
-            if (likely(last_px)
-                    && unlikely(!handle_last_tuple_in_group(*last_px, inserted_last_run))) {
+            if (likely(
+                    last_px) && unlikely(!handle_last_tuple_in_group(*last_px, inserted_last_run))) {
                 abort_trap((reason = ABORT_REASON_WRITE_NODE_INTERFERENCE));
                 goto do_abort;
             }
@@ -740,9 +766,11 @@ size_t transaction<Protocol, Traits>::validate() {
                             std::cerr << "validating dbtuple " << util::hexify(it->get_tuple()) << " at snapshot_tid " << g_proto_version_str(cast()->snapshot_tid()) << std::endl);
                     const bool found = sorted_dbtuples_contains(
                             validated_write_dbtuples, it->get_tuple());
-                    if (likely(found ?
-                            it->get_tuple()->is_latest_version(it->get_tid()) :
-                            it->get_tuple()->stable_is_latest_version(it->get_tid())))
+                    if (likely(
+                            found ? it->get_tuple()->is_latest_version(
+                                            it->get_tid()) :
+                                    it->get_tuple()->stable_is_latest_version(
+                                            it->get_tid())))
                         continue;
 
                     VERBOSE(
@@ -842,8 +870,10 @@ std::pair<dbtuple *, bool > transaction<Protocol, Traits>::try_insert_new_tuple(
     // XXX: underlying btree api should return the existing value if insert
     // fails- this would allow us to avoid having to do another search
     typename concurrent_btree::insert_info_t insert_info;
-    if (unlikely(!btr.insert_if_absent(
-                    varkey(*key), (typename concurrent_btree::value_type) tuple, &insert_info))) {
+    if (unlikely(
+            !btr.insert_if_absent(varkey(*key),
+                    (typename concurrent_btree::value_type ) tuple,
+                    &insert_info))) {
         VERBOSE(
                 std::cerr << "insert_if_absent failed for key: " << util::hexify(key) << std::endl);
         tuple->clear_latest();
