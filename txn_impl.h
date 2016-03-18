@@ -544,9 +544,9 @@ void transaction<Protocol, Traits>::write() {
         case TXN_VALIDATED:
             break;
         case TXN_COMMITED:
-            return; //no op or can signal error ?
+            throw std::invalid_argument("Cannot call write on a committed txn");
         case TXN_ABRT:
-            return; //no op or can signal error ?
+            throw std::invalid_argument("Cannot call write on an aborted txn");
     }
 
     INVARIANT(state==TXN_VALIDATED);
