@@ -572,7 +572,9 @@ transaction_proto2_static::clean_up_to_including(threadctx &ctx, uint64_t ro_tic
 #endif
 
   // XXX: hacky
-  char rcu_guard[sizeof(scoped_rcu_base<false>)] = {0};
+  char rcu_guard[sizeof(scoped_rcu_base<false>)];
+  std::memset(rcu_guard,0,sizeof(rcu_guard)); 
+  
   const size_t max_niters_with_rcu = 128;
 #define ENTER_RCU() \
     do { \
