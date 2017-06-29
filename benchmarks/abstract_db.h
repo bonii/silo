@@ -7,6 +7,7 @@
 
 #include <map>
 #include <string>
+#include <exception>
 
 #include "abstract_ordered_index.h"
 #include "../str_arena.h"
@@ -25,7 +26,7 @@ public:
    * behavior).  Also if thrown, subsequently calling get()/put() will also
    * result in undefined behavior)
    */
-  class abstract_abort_exception {};
+   class abstract_abort_exception : public std::exception {};
 
   // ctor should open db
   abstract_db() {}
