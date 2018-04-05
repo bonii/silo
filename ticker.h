@@ -21,8 +21,8 @@ public:
   ticker()
     : current_tick_(1), last_tick_inclusive_(0)
   {
-    std::thread thd(&ticker::tickerloop, this);
-    thd.detach();
+      /*std::thread thd(&ticker::tickerloop, this);
+        thd.detach();*/
   }
 
   inline uint64_t
@@ -89,6 +89,7 @@ public:
     guard(ticker &impl)
       : impl_(&impl), core_(coreid::core_id()), start_us_(0)
     {
+        return;
       tickinfo &ti = impl_->ticks_[core_];
       // bump the depth first
       const uint64_t prev_depth = util::non_atomic_fetch_add(ti.depth_, 1UL);

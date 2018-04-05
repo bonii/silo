@@ -234,7 +234,7 @@ public:
   }
 
   ~mbtree() {
-    rcu_region guard;
+    //rcu_region guard;
     threadinfo ti;
     table_.destroy(ti);
   }
@@ -243,7 +243,7 @@ public:
    * NOT THREAD SAFE
    */
   inline void clear() {
-    rcu_region guard;
+    //rcu_region guard;
     threadinfo ti;
     table_.destroy(ti);
     table_.initialize(ti);
@@ -500,7 +500,7 @@ mbtree<P>::leftmost_descend_layer(node_base_type *n)
 
 template <typename P>
 void mbtree<P>::tree_walk(tree_walk_callback &callback) const {
-  rcu_region guard;
+  //rcu_region guard;
   INVARIANT(rcu::s_instance.in_rcu_region());
   std::vector<node_base_type *> q, layers;
   q.push_back(table_.root());
@@ -584,7 +584,7 @@ template <typename P>
 inline bool mbtree<P>::search(const key_type &k, value_type &v,
                               versioned_node_t *search_info) const
 {
-  rcu_region guard;
+  //rcu_region guard;
   threadinfo ti;
   Masstree::unlocked_tcursor<P> lp(table_, k.data(), k.length());
   bool found = lp.find_unlocked(ti);
@@ -600,7 +600,7 @@ inline bool mbtree<P>::insert(const key_type &k, value_type v,
                               value_type *old_v,
                               insert_info_t *insert_info)
 {
-  rcu_region guard;
+  //rcu_region guard;
   threadinfo ti;
   Masstree::tcursor<P> lp(table_, k.data(), k.length());
   bool found = lp.find_insert(ti);
@@ -622,7 +622,7 @@ template <typename P>
 inline bool mbtree<P>::insert_if_absent(const key_type &k, value_type v,
                                         insert_info_t *insert_info)
 {
-  rcu_region guard;
+  //rcu_region guard;
   threadinfo ti;
   Masstree::tcursor<P> lp(table_, k.data(), k.length());
   bool found = lp.find_insert(ti);
@@ -648,7 +648,7 @@ inline bool mbtree<P>::insert_if_absent(const key_type &k, value_type v,
 template <typename P>
 inline bool mbtree<P>::remove(const key_type &k, value_type *old_v)
 {
-  rcu_region guard;
+  //rcu_region guard;
   threadinfo ti;
   Masstree::tcursor<P> lp(table_, k.data(), k.length());
   bool found = lp.find_locked(ti);
