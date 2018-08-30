@@ -25,7 +25,6 @@ MODE ?= perf
 
 # run with 'MASSTREE=0' to turn off masstree
 MASSTREE ?= 1
-CXX ?= g++-7
 ###############
 
 DEBUG_S=$(strip $(DEBUG))
