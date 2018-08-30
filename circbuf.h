@@ -17,7 +17,7 @@ public:
   circbuf()
     : head_(0), tail_(0)
   {
-    memset(&buf_[0], 0, Capacity * sizeof(buf_[0]));
+      memset(static_cast<void*>(&buf_[0]), 0, Capacity * sizeof(buf_[0]));
   }
 
   inline bool

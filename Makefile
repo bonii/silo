@@ -25,7 +25,7 @@ MODE ?= perf
 
 # run with 'MASSTREE=0' to turn off masstree
 MASSTREE ?= 1
-
+CXX ?= g++-7
 ###############
 
 DEBUG_S=$(strip $(DEBUG))
@@ -80,7 +80,7 @@ CXXFLAGS += -MD -Ithird-party/lz4 -I/usr/include/db4.8 -DCONFIG_H=\"$(CONFIG_H)\
 ifeq ($(DEBUG_S),1)
         CXXFLAGS += -fno-omit-frame-pointer -DDEBUG
 else
-        CXXFLAGS += -Werror -O2 -funroll-loops -fno-omit-frame-pointer
+        CXXFLAGS += -Werror -Wno-error=maybe-uninitialized -Wno-error=format-truncation -Wno-error=class-memaccess -O2 -funroll-loops -fno-omit-frame-pointer
 endif
 ifeq ($(CHECK_INVARIANTS_S),1)
 	CXXFLAGS += -DCHECK_INVARIANTS
