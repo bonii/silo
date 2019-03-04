@@ -79,7 +79,7 @@ CXXFLAGS += -MD -Ithird-party/lz4 -I/usr/include/db4.8 -DCONFIG_H=\"$(CONFIG_H)\
 ifeq ($(DEBUG_S),1)
         CXXFLAGS += -fno-omit-frame-pointer -DDEBUG
 else
-        CXXFLAGS += -Werror -Wno-error=maybe-uninitialized -Wno-error=format-truncation -O2 -funroll-loops -fno-omit-frame-pointer
+        CXXFLAGS += -Werror -Wno-error=maybe-uninitialized -Wno-error=format-truncation -Wno-error=class-memaccess -O2 -funroll-loops -fno-omit-frame-pointer
 endif
 ifeq ($(CHECK_INVARIANTS_S),1)
 	CXXFLAGS += -DCHECK_INVARIANTS
